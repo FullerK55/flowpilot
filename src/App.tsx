@@ -75,4 +75,152 @@ export default function App() {
         <button className="btn icon" onClick={() => setWeekOffset((w) => w - 4)} title="Back 4 weeks">«</button>
         <button className="btn icon" onClick={() => setWeekOffset((w) => w - 1)} title="Previous week">‹</button>
         <button className="btn" onClick={() => setWeekOffset(0)}>Today</button>
-        <button className=
+        <button className="btn icon" onClick={() => setWeekOffset((w) => w + 1)} title="Next week">›</button>
+        <button className="btn icon" onClick={() => setWeekOffset((w) => w + 4)} title="Forward 4 weeks">»</button>
+
+        <div className="spacer" />
+
+        <button className="btn outline" onClick={() => setEventDialog(true)}>+ Event</button>
+        <button
+          className="btn primary"
+          onClick={() =>
+            update((d) => {
+              const n = replan(d);
+              showToast(`Re-planned your schedule (${n} blocks placed)`);
+            })
+          }
+        >
+          ⟳ Recalculate
+        </button>
+      </header>
+
+      <div className="main">
+        <aside className="sidebar">
+          <div className="sidebar-head">
+            Tasks
+            <button className="btn" onClick={() => setTaskDialog({ open: true, task: null })}>
+              + Add
+            </button>
+          </div>
+          <div className="sidebar-body">
+            {activeTasks.length === 0 && (
+              <p className="empty">No tasks yet. Add one and it gets scheduled automatically.</p>
+            )}
+            {activeTasks.map((t) => (
+              <div className="task-card" key={t.id}>
+                <div className="task-row">
+                  <span className={`dot d-${t.color}`} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="task-title">{t.title}</div>
+                    <div className="task-meta">
+                      <span>{fmtDur(t.durationMin)}</span>
+                      {t.recurring !== "none" && <span className="badge">↻ {t.recurring}</span>}
+                      {t.priority === "high" && <span className="badge high">high</span>}
+                      {t.deadline && (
+                        <span>
+                          · due{" "}
+                          {new Date(t.deadline).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="task-actions">
+                    <button
+                      className="mini-btn"
+                      title="Mark done"
+                      onClick={() =>
+                        update((d) => {
+                          const task = d.tasks.find((x) => x.id === t.id);
+                          if (task) task.completed = true;
+                          d.blocks = d.blocks.filter((b) => b.taskId !== t.id);
+                          replan(d);
+                        })
+                      }
+                    >
+                      ✓
+                    </button>
+                    <button
+                      className="mini-btn"
+                      title="Edit"
+                      onClick={() => setTaskDialog({ open: true, task: t })}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      className="mini-btn"
+                      title="Delete"
+                      onClick={() =>
+                        update((d) => {
+                          d.tasks = d.tasks.filter((x) => x.id !== t.id);
+                          d.blocks = d.blocks.filter((b) => b.taskId !== t.id);
+                        })
+                      }
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="sidebar-foot">
+            {activeTasks.length} task{activeTasks.length === 1 ? "" : "s"} · auto-scheduled around your events
+          </div>
+        </aside>
+
+        <WeekCalendar
+          days={days}
+          events={data.events}
+          blocks={data.blocks}
+          onToggleBlock={(id, completed) =>
+            update((d) => {
+              const b = d.blocks.find((x) => x.id === id);
+              if (b) b.completed = completed;
+            })
+          }
+        />
+      </div>
+
+      {taskDialog.open && (
+        <TaskDialog
+          task={taskDialog.task}
+          onClose={() => setTaskDialog({ open: false, task: null })}
+          onSave={(payload) =>
+            update((d) => {
+              if (taskDialog.task) {
+                const t = d.tasks.find((x) => x.id === taskDialog.task!.id);
+                if (t) Object.assign(t, payload);
+              } else {
+                d.tasks.push({
+                  id: d.nextId++,
+                  completed: false,
+                  createdAt: new Date().toISOString(),
+                  ...payload,
+                });
+              }
+              replan(d);
+            })
+          }
+        />
+      )}
+
+      {eventDialog && (
+        <EventDialog
+          defaultDay={days[0] ?? new Date()}
+          onClose={() => setEventDialog(false)}
+          onSave={(payload) =>
+            update((d) => {
+              d.events.push({ id: d.nextId++, ...payload });
+              replan(d);
+            })
+          }
+        />
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
