@@ -86,12 +86,12 @@ select.inline {
   flex: 1; overflow: auto; background: var(--panel);
   border: 1px solid var(--border); border-radius: var(--radius);
 }
-.cal-inner { display: flex; min-width: 640px; }
-.gutter { width: 56px; flex-shrink: 0; }
+.cal-inner { display: flex; min-width: 0; width: 100%; }
+.gutter { width: 48px; flex-shrink: 0; }
 .gutter-head { height: 48px; border-bottom: 1px solid var(--border); }
 .hour-row { position: relative; border-bottom: 1px solid #f1f5f9; }
 .hour-label { position: absolute; top: -8px; right: 8px; font-size: 11px; color: var(--muted); }
-.day-col { flex: 1; border-left: 1px solid var(--border); position: relative; }
+.day-col { flex: 1; min-width: 0; border-left: 1px solid var(--border); position: relative; }
 .day-col:first-of-type { border-left: none; }
 .day-head {
   height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -153,4 +153,15 @@ select.inline {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: #0f172a; color: #fff; padding: 10px 18px; border-radius: 8px;
   font-size: 13px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+
+/* narrow windows: shrink sidebar and tighten blocks so nothing overflows */
+@media (max-width: 1100px) {
+  .sidebar { width: 220px; }
+}
+@media (max-width: 860px) {
+  .sidebar { width: 180px; }
+  .main { gap: 8px; padding: 8px; }
+  .block { left: 2px; right: 2px; padding: 2px 4px; }
+  .hour-label { right: 4px; font-size: 10px; }
 }
